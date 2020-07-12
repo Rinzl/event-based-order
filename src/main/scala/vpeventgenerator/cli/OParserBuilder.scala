@@ -21,7 +21,7 @@ object OParserBuilder {
         opt[Int]('i', "interval")
           .required()
           .action((x, c) => c.copy(interval = x))
-          .text("interval"),
+          .text("interval in millisecond"),
         opt[String]('o', "output-directory")
           .required()
           .action((x, c) => c.copy(outputDirectory = x))
