@@ -7,8 +7,8 @@ import org.apache.commons.lang3.time.DateUtils
 import org.quartz.impl.StdSchedulerFactory
 import org.quartz.{JobBuilder, JobDetail, JobKey, Trigger, TriggerBuilder}
 import scopt.OParser
-import vpeventgenerator.cli.Config
-import vpeventgenerator.job.{EventGenerator, OrderCreatedEventProcessor}
+import vpeventgenerator.cli.{Config, OParserBuilder}
+import vpeventgenerator.job.{EventGenerator, OrderPlacedEventProcessor}
 
 /**
  * @author dangth
@@ -41,11 +41,9 @@ object App extends LazyLogging{
     val orderCreatedProcessorJobKey = new JobKey("orderCreatedProcessor", "group1")
 
     val orderCreatedJob = JobBuilder
-      .newJob(classOf[OrderCreatedEventProcessor])
+      .newJob(classOf[OrderPlacedEventProcessor])
       .withIdentity(orderCreatedProcessorJobKey)
       .build()
-
-
 
     val jobDataOrderCreated = orderCreatedJob.getJobDataMap
     jobDataOrderCreated.put(Config.OUTPUT_DIRECTORY, config.outputDirectory)
@@ -61,38 +59,14 @@ object App extends LazyLogging{
 
     scheduler.scheduleJob(orderCreatedJob, runOnceTrigger)
 
-    val jobAndTrigger = createEventGeneratorJobAndTrigger(config)
-    scheduler.scheduleJob(jobAndTrigger._1, jobAndTrigger._2)
+    val eventGeneratorJobAndTrigger = createEventGeneratorJobAndTrigger(config)
+    scheduler.scheduleJob(eventGeneratorJobAndTrigger._1, eventGeneratorJobAndTrigger._2)
   }
 
   def main(args : Array[String]): Unit = {
-    val builder = OParser.builder[Config]
-    val parser = {
-      import builder._
-      OParser.sequence(
-        programName("vp-event-generator"),
-        head("vp-event-generator", "1.0"),
-        opt[Int]('n', "number-of-orders")
-          .required()
-          .action((x, c) => c.copy(numberOfOrders = x))
-          .text("Number of orders"),
-        opt[Int]('b', "batch-size")
-          .required()
-          .action((x, c) => c.copy(batchSize = x))
-          .text("batch size"),
-        opt[Int]('i', "interval")
-          .required()
-          .action((x, c) => c.copy(interval = x))
-          .text("interval"),
-        opt[String]('o', "output-directory")
-          .required()
-          .action((x, c) => c.copy(outputDirectory = x))
-          .text("output directory")
-      )
-    }
 
     // OParser.parse returns Option[Config]
-    OParser.parse(parser, args, Config()) match {
+    OParser.parse(OParserBuilder.build(), args, Config()) match {
       case Some(config) =>
         logger.info(s"Input config : $config")
         initializeApp(config)
