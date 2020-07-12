@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  rabbit-mq:
+    image: rabbitmq:3.8.5-alpine
+    container_name: vp_rabbit
+    hostname: my-rabbit
+    restart: always
+    ports:
+      - 5672:5672
